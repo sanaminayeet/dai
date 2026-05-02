@@ -253,11 +253,36 @@ export default function PostcardCreator() {
         border: 1px solid #3a3028;
         border-radius: 16px;
         padding: 2rem;
-        max-width: 600px;
+        max-width: 700px;
         width: 100%;
         margin: 0 auto 1.5rem;
         display: flex;
         flex-direction: column;
+    }
+
+
+    @media (max-width: 768px) {
+        .card {
+            max-width: 100%;
+            padding: 1rem;
+        }
+        .style-grid {
+            grid-template-columns: repeat(2, 1fr);
+        }
+    }
+
+
+    @media (max-width: 480px) {
+        .card-title {
+            font-size: 1.1rem;
+        }
+        .btn-row {
+            flex-direction: column;
+            gap: 8px;
+        }
+        .btn-primary, .btn-ghost {
+            width: 100%;
+        }
     }
 
 
@@ -283,6 +308,38 @@ export default function PostcardCreator() {
     .upload-zone:hover, .upload-zone.dragging {
       border-color: #c8a96e;
       background: #201c17;
+    }
+
+
+    .upload-slot {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+
+    .preview-container {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+
+    .remove-btn {
+      background: #5a5044;
+      color: #f0ebe3;
+      border: none;
+      padding: 4px 8px;
+      font-size: 11px;
+      border-radius: 4px;
+      cursor: pointer;
+      align-self: flex-start;
+    }
+
+
+    .remove-btn:hover {
+      background: #7a6e5e;
     }
 
 
@@ -312,8 +369,7 @@ export default function PostcardCreator() {
     .preview-img-small {
         width: 100%;
         height: 150px;
-        /* Change from cover to contain for step 2 previews too */
-        object-fit: contain;
+        object-fit: cover;
         border-radius: 8px;
         border: 1px solid #3a3028;
         background: #111;
@@ -495,11 +551,11 @@ export default function PostcardCreator() {
 
     .pc-photo {
         width: 100%;
-        height: 100%; /* Ensure it fills the available slot space */
+        height: 100%;
         display: block;
-        object-fit: contain; /* This shrinks the image to fit without cropping */
-        object-position: center; /* Keeps it centered in the slot */
-        background-color: transparent; /* Changed from black to keep it clean */
+        object-fit: cover;
+        object-position: center;
+        background-color: transparent;
     }
 
     .postcard-wrapper {
@@ -507,13 +563,14 @@ export default function PostcardCreator() {
         display: flex;
         justify-content: center;
         align-items: center;
-        overflow: hidden;
+        overflow-x: auto;
         border-radius: 12px;
+        padding-bottom: 0.5rem;
     }
 
     .postcard-wrapper > div {
-        max-width: 100%;
         width: 100%;
+        max-width: 640px;
     }
 
     .pc-body {

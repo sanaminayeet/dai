@@ -62,9 +62,8 @@ const ImageSlot = ({
       background: palette.tan,
       overflow: "hidden",
       position: "relative",
-      display: "flex",
-      alignItems: "center",
-      justifyContent: "center",
+      width: "100%",
+      height: "100%",
       ...style,
     }}
   >
@@ -72,8 +71,13 @@ const ImageSlot = ({
       <img
         src={image.src}
         alt={image.alt ?? "memory"}
-        style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
-        className="w-full h-full object-contain bg-black"
+        style={{
+          width: "100%",
+          height: "100%",
+          objectFit: "cover",        // ✅ consistent scaling
+          objectPosition: "center",  // 🔥 fixes "cut off right side"
+          display: "block",
+        }}
       />
     ) : (
       <div
@@ -81,8 +85,11 @@ const ImageSlot = ({
           display: "flex",
           flexDirection: "column",
           alignItems: "center",
+          justifyContent: "center",
           gap: 6,
           opacity: 0.4,
+          width: "100%",
+          height: "100%",
         }}
       >
         <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke={palette.brown} strokeWidth="1.5">
@@ -90,7 +97,14 @@ const ImageSlot = ({
           <circle cx="8.5" cy="8.5" r="1.5" />
           <path d="M21 15l-5-5L5 21" />
         </svg>
-        <span style={{ fontFamily: fonts.mono, fontSize: 10, color: palette.brown, letterSpacing: "0.1em" }}>
+        <span
+          style={{
+            fontFamily: fonts.mono,
+            fontSize: 10,
+            color: palette.brown,
+            letterSpacing: "0.1em",
+          }}
+        >
           drop photo
         </span>
       </div>
@@ -196,7 +210,8 @@ const TemplateSolo = forwardRef<HTMLDivElement, MemoryCardProps>(
       <div
         ref={ref}
         style={{
-          width: CARD_W,
+          width: '100%',
+          maxWidth: CARD_W,
           height: h,
           position: "relative",
           overflow: "hidden",
@@ -205,7 +220,7 @@ const TemplateSolo = forwardRef<HTMLDivElement, MemoryCardProps>(
         }}
       >
         <GrainOverlay />
-        <ImageSlot image={images[0]} style={{ width: "100%", height: "100%", position: "absolute", inset: 0, objectFit: "contain" }} />
+        <ImageSlot image={images[0]} style={{ width: "100%", height: "100%", position: "absolute", inset: 0, objectFit: "cover" }} />
         {/* vignette */}
         <div
           style={{
@@ -266,7 +281,8 @@ const TemplateDiptych = forwardRef<HTMLDivElement, MemoryCardProps>(
       <div
         ref={ref}
         style={{
-          width: CARD_W,
+          width: '100%',
+          maxWidth: CARD_W,
           background: palette.cream,
           padding: "28px 28px 24px",
           display: "flex",
@@ -278,8 +294,8 @@ const TemplateDiptych = forwardRef<HTMLDivElement, MemoryCardProps>(
       >
         <GrainOverlay />
         <div style={{ display: "flex", gap: 10, height: h - 28 - 24 - 16 - 48 }}>
-          <ImageSlot image={images[0]} style={{ flex: 1, borderRadius: 3, objectFit: "contain"  }} />
-          <ImageSlot image={images[1]} style={{ flex: 1, borderRadius: 3, objectFit: "contain"  }} />
+          <ImageSlot image={images[0]} style={{ flex: 1, borderRadius: 3, objectFit: "cover"  }} />
+          <ImageSlot image={images[1]} style={{ flex: 1, borderRadius: 3, objectFit: "cover"  }} />
         </div>
         <div
           style={{
@@ -320,7 +336,8 @@ const TemplateTriptych = forwardRef<HTMLDivElement, MemoryCardProps>(
       <div
         ref={ref}
         style={{
-          width: CARD_W,
+          width: '100%',
+          maxWidth: CARD_W,
           background: palette.warmWhite,
           padding: "24px 24px 20px",
           display: "flex",
@@ -332,11 +349,11 @@ const TemplateTriptych = forwardRef<HTMLDivElement, MemoryCardProps>(
       >
         <GrainOverlay />
         {/* Top: big photo */}
-        <ImageSlot image={images[0]} style={{ width: "100%", height: 220, borderRadius: 3, objectFit: "contain"  }} />
+        <ImageSlot image={images[0]} style={{ width: "100%", height: 220, borderRadius: 3, objectFit: "cover"  }} />
         {/* Bottom: two smaller */}
         <div style={{ display: "flex", gap: 10, height: 140 }}>
-          <ImageSlot image={images[1]} style={{ flex: 1, borderRadius: 3, objectFit: "contain"  }} />
-          <ImageSlot image={images[2]} style={{ flex: 1, borderRadius: 3, objectFit: "contain"  }} />
+          <ImageSlot image={images[1]} style={{ flex: 1, borderRadius: 3, objectFit: "cover"  }} />
+          <ImageSlot image={images[2]} style={{ flex: 1, borderRadius: 3, objectFit: "cover"  }} />
         </div>
         <div
           style={{
@@ -366,7 +383,8 @@ const TemplatePolaroid = forwardRef<HTMLDivElement, MemoryCardProps>(
       <div
         ref={ref}
         style={{
-          width: CARD_W,
+          width: '100%',
+          maxWidth: CARD_W,
           background: "#EDEBE6",
           display: "flex",
           alignItems: "center",
@@ -389,7 +407,7 @@ const TemplatePolaroid = forwardRef<HTMLDivElement, MemoryCardProps>(
             transform: "rotate(-1.2deg)",
           }}
         >
-          <ImageSlot image={images[0]} style={{ width: "100%", height: 280, objectFit: "contain"  }} />
+          <ImageSlot image={images[0]} style={{ width: "100%", height: 280, objectFit: "cover"  }} />
           <div style={{ paddingTop: 16, paddingBottom: 4, display: "flex", flexDirection: "column", gap: 6 }}>
             {caption && (
               <Caption
@@ -416,7 +434,8 @@ const TemplateFilmstrip = forwardRef<HTMLDivElement, MemoryCardProps>(
       <div
         ref={ref}
         style={{
-          width: CARD_W,
+          width: '100%',
+          maxWidth: CARD_W,
           background: palette.espresso,
           padding: "20px 20px 18px",
           display: "flex",
@@ -453,7 +472,7 @@ const TemplateFilmstrip = forwardRef<HTMLDivElement, MemoryCardProps>(
                 overflow: "hidden",
               }}
             >
-              <ImageSlot image={images[i]} style={{ width: "100%", height: "100%", objectFit: "contain"  }} />
+              <ImageSlot image={images[i]} style={{ width: "100%", height: "100%", objectFit: "cover"  }} />
             </div>
           ))}
         </div>
@@ -503,7 +522,8 @@ const TemplatePostcard = forwardRef<HTMLDivElement, MemoryCardProps>(
       <div
         ref={ref}
         style={{
-          width: CARD_W,
+          width: '100%',
+          maxWidth: CARD_W,
           height: 380,
           background: palette.warmWhite,
           display: "flex",
@@ -515,7 +535,7 @@ const TemplatePostcard = forwardRef<HTMLDivElement, MemoryCardProps>(
       >
         <GrainOverlay />
         {/* Left: photo */}
-        <ImageSlot image={images[0]} style={{ width: "58%", height: "100%", flexShrink: 0, objectFit: "contain"  }} />
+        <ImageSlot image={images[0]} style={{ width: "58%", height: "100%", flexShrink: 0, objectFit: "cover"  }} />
         {/* Right: writing area */}
         <div
           style={{
@@ -603,7 +623,8 @@ const TemplateScrapbook = forwardRef<HTMLDivElement, MemoryCardProps>(
       <div
         ref={ref}
         style={{
-          width: CARD_W,
+          width: '100%',
+          maxWidth: CARD_W,
           height: 420,
           background: "#F0EBE1",
           position: "relative",
@@ -643,7 +664,7 @@ const TemplateScrapbook = forwardRef<HTMLDivElement, MemoryCardProps>(
               borderRadius: 2,
               zIndex: 10,
             }} />
-            <ImageSlot image={images[i]} style={{ width: "100%", height: h, display: "block", objectFit: "contain"  }} />
+            <ImageSlot image={images[i]} style={{ width: "100%", height: h, display: "block", objectFit: "cover"  }} />
           </div>
         ))}
  
@@ -674,7 +695,8 @@ const TemplateJournal = forwardRef<HTMLDivElement, MemoryCardProps>(
       <div
         ref={ref}
         style={{
-          width: CARD_W,
+          width: '100%',
+          maxWidth: CARD_W,
           background: "#FAF7F0",
           position: "relative",
           overflow: "hidden",
@@ -722,7 +744,7 @@ const TemplateJournal = forwardRef<HTMLDivElement, MemoryCardProps>(
               transform: "rotate(-1.8deg)",
               flexShrink: 0,
             }}>
-              <ImageSlot image={images[0]} style={{ width: 240, height: 190, objectFit: "contain"  }} />
+              <ImageSlot image={images[0]} style={{ width: 240, height: 190, objectFit: "cover"  }} />
             </div>
             <div style={{ display: "flex", flexDirection: "column", gap: 10, flex: 1 }}>
               <div style={{
@@ -731,7 +753,7 @@ const TemplateJournal = forwardRef<HTMLDivElement, MemoryCardProps>(
                 boxShadow: "1px 2px 8px rgba(50,30,10,0.10)",
                 transform: "rotate(1.5deg)",
               }}>
-                <ImageSlot image={images[1]} style={{ width: "100%", height: 110, objectFit: "contain"  }} />
+                <ImageSlot image={images[1]} style={{ width: "100%", height: 110, objectFit: "cover"  }} />
               </div>
               <div style={{
                 background: "#FDFAF5",
@@ -739,7 +761,7 @@ const TemplateJournal = forwardRef<HTMLDivElement, MemoryCardProps>(
                 boxShadow: "1px 2px 8px rgba(50,30,10,0.10)",
                 transform: "rotate(-0.8deg)",
               }}>
-                <ImageSlot image={images[2]} style={{ width: "100%", height: 100, objectFit: "contain" }} />
+                <ImageSlot image={images[2]} style={{ width: "100%", height: 100, objectFit: "cover" }} />
               </div>
             </div>
           </div>
@@ -780,7 +802,8 @@ const TemplateCorkboard = forwardRef<HTMLDivElement, MemoryCardProps>(
       <div
         ref={ref}
         style={{
-          width: CARD_W,
+          width: '100%',
+          maxWidth: CARD_W,
           height: 390,
           position: "relative",
           overflow: "hidden",
@@ -814,7 +837,7 @@ const TemplateCorkboard = forwardRef<HTMLDivElement, MemoryCardProps>(
               transform: `rotate(${rotate}deg)`,
               width: w,
             }}>
-              <ImageSlot image={images[i]} style={{ width: "100%", height: h, objectFit: "contain"  }} />
+              <ImageSlot image={images[i]} style={{ width: "100%", height: h, objectFit: "cover"  }} />
             </div>
           </div>
         ))}
@@ -856,7 +879,8 @@ const TemplatePile = forwardRef<HTMLDivElement, MemoryCardProps>(
       <div
         ref={ref}
         style={{
-          width: CARD_W,
+          width: '100%',
+          maxWidth: CARD_W,
           height: 390,
           background: "#2A221A",
           position: "relative",
@@ -885,7 +909,7 @@ const TemplatePile = forwardRef<HTMLDivElement, MemoryCardProps>(
             zIndex: i + 1,
             width: w,
           }}>
-            <ImageSlot image={images[i + 1]} style={{ width: "100%", height: h, objectFit: "contain"  }} />
+            <ImageSlot image={images[i + 1]} style={{ width: "100%", height: h, objectFit: "cover"  }} />
           </div>
         ))}
  
@@ -899,7 +923,7 @@ const TemplatePile = forwardRef<HTMLDivElement, MemoryCardProps>(
           zIndex: 10,
           width: 300,
         }}>
-          <ImageSlot image={images[0]} style={{ width: "100%", height: 200, objectFit: "contain"  }} />
+          <ImageSlot image={images[0]} style={{ width: "100%", height: 200, objectFit: "cover"  }} />
           <div style={{ paddingTop: 10, display: "flex", flexDirection: "column", gap: 4, alignItems: "center" }}>
             {caption && <Caption text={caption} align="center" style={{ fontSize: 12, color: palette.brown }} />}
             <Meta date={date} tag={tag} align="center" />
@@ -1047,7 +1071,7 @@ const TemplateMorningPages = forwardRef<HTMLDivElement, MemoryCardProps>(
     ];
     return (
       <div ref={ref} style={{
-        width: CARD_W, background: "#FAF7F0",
+        width: '100%', maxWidth: CARD_W, background: "#FAF7F0",
         position: "relative", overflow: "hidden",
         minHeight: 420, fontFamily: fonts.serif,
       }}>
@@ -1083,7 +1107,7 @@ const TemplateMorningPages = forwardRef<HTMLDivElement, MemoryCardProps>(
           boxShadow: "1px 2px 10px rgba(50,30,10,0.12)",
           transform: "rotate(2.5deg)", zIndex: 4, width: 160,
         }}>
-          <ImageSlot image={images[0]} style={{ width: "100%", height: 120, objectFit: "contain"  }} />
+          <ImageSlot image={images[0]} style={{ width: "100%", height: 120, objectFit: "cover"  }} />
         </div>
 
         {/* content area */}
@@ -1125,7 +1149,7 @@ const TemplateFieldNotes = forwardRef<HTMLDivElement, MemoryCardProps>(
   ({ images, caption, date, tag }, ref) => {
     return (
       <div ref={ref} style={{
-        width: CARD_W, background: "#F2EDE3",
+        width: '100%', maxWidth: CARD_W, background: "#F2EDE3",
         position: "relative", overflow: "hidden",
         minHeight: 420,
       }}>
@@ -1169,7 +1193,7 @@ const TemplateFieldNotes = forwardRef<HTMLDivElement, MemoryCardProps>(
               <div style={{ position: "relative" }}>
                 <Deco.WashiH x={20} y={-8} w={70} color="rgba(212,96,26,0.3)" pattern="zigzag" />
                 <div style={{ background: "#FDFAF5", padding: "4px 4px 14px", boxShadow: "1px 2px 6px rgba(50,30,10,0.10)", transform: "rotate(-1deg)" }}>
-                  <ImageSlot image={images[0]} style={{ width: "100%", height: 140, objectFit: "contain"  }} />
+                  <ImageSlot image={images[0]} style={{ width: "100%", height: 140, objectFit: "cover"  }} />
                 </div>
               </div>
 
@@ -1205,7 +1229,7 @@ const TemplateFieldNotes = forwardRef<HTMLDivElement, MemoryCardProps>(
               <div style={{ position: "relative", marginTop: 4 }}>
                 <Deco.WashiH x={30} y={-8} w={60} color="rgba(122,175,122,0.4)" pattern="dots" />
                 <div style={{ background: "#FDFAF5", padding: "4px 4px 14px", boxShadow: "1px 2px 6px rgba(50,30,10,0.10)", transform: "rotate(1.2deg)" }}>
-                  <ImageSlot image={images[1]} style={{ width: "100%", height: 110, objectFit: "contain"  }} />
+                  <ImageSlot image={images[1]} style={{ width: "100%", height: 110, objectFit: "cover"  }} />
                 </div>
               </div>
             </div>
@@ -1227,7 +1251,7 @@ const TemplateWeeklySpread = forwardRef<HTMLDivElement, MemoryCardProps>(
     const moods = ["🌤", "☕", "", "📖", "", "🌿", "🌙"];
     return (
       <div ref={ref} style={{
-        width: CARD_W, background: "#F8F4EE",
+        width: '100%', maxWidth: CARD_W, background: "#F8F4EE",
         position: "relative", overflow: "hidden", minHeight: 440,
       }}>
         <GrainOverlay />
@@ -1278,7 +1302,7 @@ const TemplateWeeklySpread = forwardRef<HTMLDivElement, MemoryCardProps>(
             <div style={{ marginTop: 14, position: "relative" }}>
               <Deco.WashiH x={40} y={-8} w={65} color="rgba(212,160,176,0.5)" pattern="dots" />
               <div style={{ background: "#FDFAF5", padding: "4px 4px 16px", boxShadow: "1px 2px 8px rgba(50,30,10,0.10)", transform: "rotate(-1.5deg)", width: "fit-content" }}>
-                <ImageSlot image={images[0]} style={{ width: 200, height: 110, objectFit: "contain"  }} />
+                <ImageSlot image={images[0]} style={{ width: 200, height: 110, objectFit: "cover"  }} />
               </div>
             </div>
           </div>
@@ -1290,13 +1314,13 @@ const TemplateWeeklySpread = forwardRef<HTMLDivElement, MemoryCardProps>(
               <div style={{ position: "relative" }}>
                 <Deco.WashiH x={10} y={-8} w={55} color="rgba(144,191,144,0.5)" pattern="zigzag" />
                 <div style={{ background: "#FDFAF5", padding: "4px 4px 16px", boxShadow: "1px 2px 8px rgba(50,30,10,0.10)", transform: "rotate(2deg)" }}>
-                  <ImageSlot image={images[1]} style={{ width: 118, height: 100, objectFit: "contain"  }} />
+                  <ImageSlot image={images[1]} style={{ width: 118, height: 100, objectFit: "cover"  }} />
                 </div>
               </div>
               <div style={{ position: "relative", marginTop: 10 }}>
                 <Deco.WashiH x={15} y={-8} w={55} color="rgba(160,144,200,0.45)" pattern="lines" />
                 <div style={{ background: "#FDFAF5", padding: "4px 4px 16px", boxShadow: "1px 2px 8px rgba(50,30,10,0.10)", transform: "rotate(-2.5deg)" }}>
-                  <ImageSlot image={images[2]} style={{ width: 118, height: 100, objectFit: "contain"  }} />
+                  <ImageSlot image={images[2]} style={{ width: 118, height: 100, objectFit: "cover"  }} />
                 </div>
               </div>
             </div>
@@ -1333,7 +1357,7 @@ const TemplateLetterpress = forwardRef<HTMLDivElement, MemoryCardProps>(
   ({ images, caption, date, tag }, ref) => {
     return (
       <div ref={ref} style={{
-        width: CARD_W, background: "#F5F0E6",
+        width: '100%', maxWidth: CARD_W, background: "#F5F0E6",
         position: "relative", overflow: "hidden", minHeight: 400,
         border: "1px solid #E2D8C8",
       }}>
@@ -1368,7 +1392,7 @@ const TemplateLetterpress = forwardRef<HTMLDivElement, MemoryCardProps>(
         <div style={{ position: "relative", zIndex: 3, padding: "30px 40px 28px", display: "flex", flexDirection: "column", alignItems: "center", gap: 0 }}>
           {/* photo — centered with polaroid border */}
           <div style={{ background: "#FDFAF5", padding: "6px 6px 24px", boxShadow: "0 2px 16px rgba(50,30,10,0.10)", marginBottom: 24 }}>
-            <ImageSlot image={images[0]} style={{ width: 320, height: 200, objectFit: "contain"  }} />
+            <ImageSlot image={images[0]} style={{ width: 320, height: 200, objectFit: "cover"  }} />
           </div>
 
           {/* ornamental divider */}
