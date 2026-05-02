@@ -2,6 +2,7 @@
 
 
 import { useState, useRef, useCallback } from "react";
+import { TEMPLATES, MemoryCard } from "./memorycardtemplatex";
 
 const API_KEY = process.env.NEXT_PUBLIC_GEMINI_API_KEY;
 
@@ -15,30 +16,30 @@ const fileToBase64 = (file) =>
     });
 
 
-const generatePostcardMessage = async (imageBase64, mimeType, userContext = "", recipient = "", language = "English") => {
+const generatePostcardMessage = async (imageFiles, userContext = "", recipient = "", language = "English") => {
     if (!API_KEY) {
-        throw new Error("API Key is missing. Check your .env.local file and restart your server.");
+        throw new Error("API Key is missing.");
     }
-    
+
+    // Convert all selected files to Base64
+    const imageParts = await Promise.all(
+        imageFiles.filter(Boolean).map(async (file) => ({
+            inline_data: {
+                mime_type: file.type,
+                data: await fileToBase64(file)
+            }
+        }))
+    );
+
     const audienceClause = recipient
-        ? `You are writing to ${recipient}. Match your tone to the relationship — casual for friends, warm for family, etc.`
-        : "You are writing this as a personal journal entry — reflective, first-person, like a travel diary.";
+        ? `You are writing to ${recipient}. Match your tone to the relationship.`
+        : "You are writing this as a personal journal entry.";
 
-
-    const contextClause = userContext
-        ? `The sender also shared this context: "${userContext}".`
-        : "Base the message entirely on what you see in the photo.";
-
-
-    const languageClause = `Write the message in ${language}.`;
-
-
-    const prompt = `Look at this photo carefully. Write a short, heartfelt postcard message (2-3 sentences).
+    const prompt = `Look at these photos carefully. Write a short, heartfelt postcard message (2-3 sentences) based on the collective mood and content of all images.
 ${audienceClause}
-${contextClause}
-${languageClause}
-Be specific to what you see — the place, mood, or activity. Keep it casual and natural, not overly poetic. Write in first person as the photo taker. Do not add any preamble or sign-off — just the message body.`;
-
+${userContext ? `Context: ${userContext}` : ""}
+Language: ${language}.
+Write in first person. Do not add any preamble or sign-off—just the message body.`;
 
     const response = await fetch(
         `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-lite-preview:generateContent?key=${API_KEY}`,
@@ -49,7 +50,7 @@ Be specific to what you see — the place, mood, or activity. Keep it casual and
                 contents: [
                     {
                         parts: [
-                            { inline_data: { mime_type: mimeType, data: imageBase64 } },
+                            ...imageParts, // Spread all images into the prompt
                             { text: prompt },
                         ],
                     },
@@ -59,12 +60,10 @@ Be specific to what you see — the place, mood, or activity. Keep it casual and
         }
     );
 
-
     if (!response.ok) {
         const err = await response.json();
         throw new Error(err.error?.message || "Gemini API error");
     }
-
 
     const data = await response.json();
     return data.candidates[0].content.parts[0].text.trim();
@@ -82,27 +81,43 @@ const STYLES = [
 export default function PostcardCreator() {
     const [language, setLanguage] = useState("English");
     const [step, setStep] = useState(1);
-    const [imageFile, setImageFile] = useState(null);
+    const [template, setTemplate] = useState("solo");
+    const [style, setStyle] = useState(STYLES[0]);
+    const [imageFiles, setImageFiles] = useState([]);
+    const [imagePreviews, setImagePreviews] = useState([]);
     const [imagePreview, setImagePreview] = useState(null);
     const [recipient, setRecipient] = useState("");
     const [context, setContext] = useState("");
     const [message, setMessage] = useState("");
-    const [template, setTemplate] = useState("solo");
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
     const [dragging, setDragging] = useState(false);
-    const fileInputRef = useRef();
+    const fileInputRefs = useRef([]); 
     const postcardRef = useRef();
 
+    const selectedTemplate = TEMPLATES.find((t) => t.id === template);
 
-    const handleFile = useCallback((file) => {
+    // Sample image for previews (gradient placeholder)
+    const sampleImage = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='300'%3E%3Cdefs%3E%3ClinearGradient id='grad' x1='0%25' y1='0%25' x2='100%25' y2='100%25'%3E%3Cstop offset='0%25' style='stop-color:rgb(200,160,100);stop-opacity:1' /%3E%3Cstop offset='100%25' style='stop-color:rgb(100,80,60);stop-opacity:1' /%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='400' height='300' fill='url(%23grad)'/%3E%3Ccircle cx='100' cy='80' r='40' fill='rgba(255,255,255,0.3)'/%3E%3Ctext x='200' y='150' font-size='20' fill='rgba(255,255,255,0.6)' text-anchor='middle' font-family='serif'%3ESample%3C/text%3E%3C/svg%3E";
+
+
+    const handleFile = useCallback((file, index) => {
         if (!file || !file.type.startsWith("image/")) return;
-        setImageFile(file);
-        // Convert to data URL instead of blob URL — works better with html2canvas
+
         const reader = new FileReader();
-        reader.onload = (e) => setImagePreview(e.target.result);
+        reader.onload = (e) => {
+            setImagePreviews(prev => {
+                const newPreviews = [...prev];
+                newPreviews[index] = e.target.result;
+                return newPreviews;
+            });
+            setImageFiles(prev => {
+                const newFiles = [...prev];
+                newFiles[index] = file;
+                return newFiles;
+            });
+        };
         reader.readAsDataURL(file);
-        setError("");
     }, []);
 
 
@@ -114,16 +129,16 @@ export default function PostcardCreator() {
 
 
     const handleGenerate = async () => {
-        if (!imageFile) return;
+        if (imageFiles.filter(Boolean).length === 0) return;
         setLoading(true);
         setError("");
         try {
-            const base64 = await fileToBase64(imageFile);
-            const msg = await generatePostcardMessage(base64, imageFile.type, context, recipient, language);
+            // Now passing the entire array of files
+            const msg = await generatePostcardMessage(imageFiles, context, recipient, language);
             setMessage(msg);
-            setStep(3);
+            setStep(4);
         } catch (e) {
-            setError(e.message || "Something went wrong. Check your API key.");
+            setError(e.message);
         } finally {
             setLoading(false);
         }
@@ -131,81 +146,18 @@ export default function PostcardCreator() {
 
 
     const handleDownload = async () => {
-        const cardWidth = 1200;
-        const photoHeight = 480;
-        const bodyHeight = 400;
-        const totalHeight = photoHeight + bodyHeight;
-
-        const canvas = document.createElement("canvas");
-        canvas.width = cardWidth;
-        canvas.height = totalHeight;
-        const ctx = canvas.getContext("2d");
-
-        ctx.fillStyle = style.bg;
-        ctx.fillRect(0, 0, cardWidth, totalHeight);
-
-        const img = new Image();
-        img.src = imagePreview;
-        await new Promise((res) => { img.onload = res; });
-
-        const imgAspect = img.width / img.height;
-        const targetAspect = cardWidth / photoHeight;
-        let sx, sy, sw, sh;
-        if (imgAspect > targetAspect) {
-            sh = img.height; sw = sh * targetAspect;
-            sx = (img.width - sw) / 2; sy = 0;
-        } else {
-            sw = img.width; sh = sw / targetAspect;
-            sx = 0; sy = (img.height - sh) / 2;
+        if (!postcardRef.current) return;
+        try {
+            const { toPng } = await import("html-to-image");
+            const dataUrl = await toPng(postcardRef.current);
+            const link = document.createElement("a");
+            link.href = dataUrl;
+            link.download = `memory-card-${Date.now()}.png`;
+            link.click();
+        } catch (err) {
+            alert("Export failed: " + err.message);
         }
-        ctx.drawImage(img, sx, sy, sw, sh, 0, 0, cardWidth, photoHeight);
-
-        ctx.strokeStyle = "rgba(0,0,0,0.08)";
-        ctx.lineWidth = 1;
-        ctx.beginPath();
-        ctx.moveTo(0, photoHeight); ctx.lineTo(cardWidth, photoHeight);
-        ctx.stroke();
-
-        ctx.fillStyle = style.accent;
-        ctx.font = "22px sans-serif";
-        ctx.globalAlpha = 0.4;
-        ctx.fillText("MESSAGE", 40, photoHeight + 40);
-        ctx.globalAlpha = 1;
-        ctx.font = "26px sans-serif";
-        const words = message.split(" ");
-        let line = ""; let y = photoHeight + 80;
-        for (const word of words) {
-            const test = line + word + " ";
-            if (ctx.measureText(test).width > 500 && line !== "") {
-            ctx.fillText(line, 40, y); line = word + " "; y += 40;
-            } else { line = test; }
-        }
-        ctx.fillText(line, 40, y);
-
-        ctx.setLineDash([10, 8]);
-        ctx.strokeStyle = "rgba(0,0,0,0.1)";
-        ctx.beginPath();
-        ctx.moveTo(cardWidth / 2, photoHeight); ctx.lineTo(cardWidth / 2, totalHeight);
-        ctx.stroke();
-        ctx.setLineDash([]);
-
-        const rx = cardWidth / 2 + 40;
-        ctx.font = "22px sans-serif";
-        ctx.globalAlpha = 0.4;
-        ctx.fillText(recipient ? "To" : "Journal", rx, photoHeight + 100);
-        ctx.globalAlpha = 1;
-        ctx.font = "bold 34px sans-serif";
-        ctx.fillText(recipient || "My memories", rx, photoHeight + 150);
-        ctx.font = "22px sans-serif";
-        ctx.globalAlpha = 0.5;
-        ctx.fillText(recipient ? "with love ♥" : "", rx, photoHeight + 185);
-        ctx.globalAlpha = 1;
-
-        const link = document.createElement("a");
-        link.download = "postcard.png";
-        link.href = canvas.toDataURL("image/png");
-        link.click();
-        };
+    };
 
 
     const css = `
@@ -297,12 +249,15 @@ export default function PostcardCreator() {
 
 
     .card {
-      background: #221e19;
-      border: 1px solid #3a3028;
-      border-radius: 16px;
-      padding: 2rem;
-      max-width: 600px;
-      margin: 0 auto 1.5rem;
+        background: #221e19;
+        border: 1px solid #3a3028;
+        border-radius: 16px;
+        padding: 2rem;
+        max-width: 600px;
+        width: 100%;
+        margin: 0 auto 1.5rem;
+        display: flex;
+        flex-direction: column;
     }
 
 
@@ -354,6 +309,15 @@ export default function PostcardCreator() {
       margin-bottom: 1rem;
     }
 
+    .preview-img-small {
+        width: 100%;
+        height: 150px;
+        /* Change from cover to contain for step 2 previews too */
+        object-fit: contain;
+        border-radius: 8px;
+        border: 1px solid #3a3028;
+        background: #111;
+    }
 
     .change-btn {
       background: none;
@@ -430,6 +394,7 @@ export default function PostcardCreator() {
       color: #8a7e6e;
       transition: all 0.15s;
       font-family: 'DM Mono', monospace;
+      position: relative;
     }
 
 
@@ -530,13 +495,26 @@ export default function PostcardCreator() {
 
     .pc-photo {
         width: 100%;
-        height: 240px;
-        object-fit: cover;
-        object-position: center;
+        height: 100%; /* Ensure it fills the available slot space */
         display: block;
-        max-width: 100%;
+        object-fit: contain; /* This shrinks the image to fit without cropping */
+        object-position: center; /* Keeps it centered in the slot */
+        background-color: transparent; /* Changed from black to keep it clean */
     }
 
+    .postcard-wrapper {
+        width: 100%;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        overflow: hidden;
+        border-radius: 12px;
+    }
+
+    .postcard-wrapper > div {
+        max-width: 100%;
+        width: 100%;
+    }
 
     .pc-body {
       display: grid;
@@ -625,7 +603,7 @@ export default function PostcardCreator() {
 
 
                 <div className="steps">
-                    {["Upload", "Compose", "Preview"].map((s, i) => (
+                    {["Template", "Upload", "Compose", "Preview"].map((s, i) => (
                         <div key={s} style={{ display: "flex", alignItems: "center" }}>
                             {i > 0 && <div className="step-divider" />}
 
@@ -643,55 +621,49 @@ export default function PostcardCreator() {
                 </div>
 
 
-                {/* Step 1 — Upload */}
+                {/* Step 1 — Template Selection */}
                 {step === 1 && (
                     <div className="card">
-                        <div className="card-title">Choose your photo</div>
+                        <div className="card-title">Choose a template</div>
 
-
-                        {!imagePreview ? (
-                            <div
-                                className={`upload-zone ${dragging ? "dragging" : ""}`}
-                                onDragOver={(e) => { e.preventDefault(); setDragging(true); }}
-                                onDragLeave={() => setDragging(false)}
-                                onDrop={handleDrop}
-                                onClick={() => fileInputRef.current.click()}
-                            >
-                                <div className="upload-icon">
-                                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
-                                        <rect x="3" y="3" width="18" height="18" rx="3" stroke="#c8a96e" strokeWidth="1.5" />
-                                        <circle cx="8.5" cy="8.5" r="1.5" stroke="#c8a96e" strokeWidth="1.5" />
-                                        <path d="M3 15l5-5 4 4 3-3 6 6" stroke="#c8a96e" strokeWidth="1.5" strokeLinecap="round" />
-                                    </svg>
+                        <div className="style-grid">
+                            {TEMPLATES.map((t) => (
+                                <div key={t.id}>
+                                    <button
+                                        className={`style-chip ${template === t.id ? "selected" : ""}`}
+                                        onClick={() => setTemplate(t.id)}
+                                        style={{
+                                            display: "flex",
+                                            flexDirection: "column",
+                                            alignItems: "center",
+                                            gap: 6,
+                                            padding: "12px 8px",
+                                            cursor: "pointer",
+                                        }}
+                                    >
+                                        <div
+                                            style={{
+                                                fontWeight: 500,
+                                                fontSize: "11px",
+                                                letterSpacing: "0.5px",
+                                            }}
+                                        >
+                                            {t.label}
+                                        </div>
+                                        <div style={{ fontSize: "10px", opacity: 0.7 }}>
+                                            {t.slots} image{t.slots !== 1 ? "s" : ""}
+                                        </div>
+                                        <div style={{ fontSize: "9px", opacity: 0.5, textAlign: "center" }}>
+                                            {t.description}
+                                        </div>
+                                    </button>
                                 </div>
-                                <div className="upload-text">
-                                    <strong>Drop a photo here</strong><br />
-                                    or click to browse your files
-                                </div>
-                            </div>
-                        ) : (
-                            <>
-                                <img src={imagePreview} alt="preview" className="preview-img" />
-                                <button className="change-btn" onClick={() => { setImageFile(null); setImagePreview(null); }}>
-                                    ← change photo
-                                </button>
-                            </>
-                        )}
-
-
-                        <input
-                            ref={fileInputRef}
-                            type="file"
-                            accept="image/*"
-                            style={{ display: "none" }}
-                            onChange={(e) => handleFile(e.target.files[0])}
-                        />
-
+                            ))}
+                        </div>
 
                         <div className="btn-row">
                             <button
                                 className="btn-primary"
-                                disabled={!imageFile}
                                 onClick={() => setStep(2)}
                             >
                                 Next →
@@ -700,11 +672,74 @@ export default function PostcardCreator() {
                     </div>
                 )}
 
-
-                {/* Step 2 — Compose */}
+                {/* Step 2 — Upload */}
+                {/* Step 2 — Upload */}
                 {step === 2 && (
                     <div className="card">
-                        <div className="card-title">Compose your postcard</div>
+                        <div className="card-title">Upload photos ({selectedTemplate?.slots} required)</div>
+                        
+                        <div style={{ 
+                            display: "grid", 
+                            gridTemplateColumns: selectedTemplate?.slots > 1 ? "1fr 1fr" : "1fr", 
+                            gap: "1rem" 
+                        }}>
+                            {Array.from({ length: selectedTemplate?.slots }).map((_, i) => (
+                                <div key={i} className="upload-slot">
+                                    <label>Photo {i + 1}</label>
+                                    {!imagePreviews[i] ? (
+                                        <div 
+                                            className="upload-zone small"
+                                            onClick={() => fileInputRefs.current[i].click()}
+                                        >
+                                            <span>+ Add</span>
+                                        </div>
+                                    ) : (
+                                        <div className="preview-container">
+                                            <img src={imagePreviews[i]} className="preview-img-small" />
+                                            <button 
+                                                className="remove-btn" 
+                                                onClick={() => {
+                                                    const nextP = [...imagePreviews];
+                                                    nextP[i] = null;
+                                                    setImagePreviews(nextP);
+
+                                                    const nextF = [...imageFiles];
+                                                    nextF[i] = null;
+                                                    setImageFiles(nextF);
+                                                }}
+                                            >
+                                                Remove
+                                            </button>
+                                        </div>
+                                    )}
+                                    <input 
+                                        type="file" 
+                                        ref={el => fileInputRefs.current[i] = el}
+                                        style={{ display: "none" }}
+                                        onChange={(e) => handleFile(e.target.files[0], i)}
+                                    />
+                                </div>
+                            ))}
+                        </div>
+
+                        <div className="btn-row">
+                            <button className="btn-ghost" onClick={() => setStep(1)}>← Back</button>
+                            <button 
+                                className="btn-primary" 
+                                disabled={imageFiles.length < selectedTemplate?.slots}
+                                onClick={() => setStep(3)}
+                            >
+                                Next →
+                            </button>
+                        </div>
+                    </div>
+                )}
+
+
+                {/* Step 3 — Compose */}
+                {step === 3 && (
+                    <div className="card">
+                        <div className="card-title">Compose your {selectedTemplate?.label}</div>
 
 
                         <div className="field-group">
@@ -781,7 +816,7 @@ export default function PostcardCreator() {
 
 
                         <div className="btn-row">
-                            <button className="btn-ghost" onClick={() => setStep(1)}>← Back</button>
+                            <button className="btn-ghost" onClick={() => setStep(2)}>← Back</button>
                             <button
                                 className="btn-primary"
                                 disabled={loading}
@@ -796,35 +831,30 @@ export default function PostcardCreator() {
                 )}
 
 
-                {/* Step 3 — Preview */}
-                {step === 3 && (
-                  <div className="card">
-                    <div className="card-title">Your postcard</div>
-
-                    <div ref={postcardRef}>
-                      <MemoryCard
-                        templateId={templateId}
-                        images={[imagePreview]}
-                        caption={message}
-                        date={new Date().toISOString().slice(0, 10)}
-                        tag={recipient ? `To ${recipient}` : "Journal"}
-                      />
+                {/* Step 4 — Preview */}
+                {step === 4 && (
+                    <div className="card">
+                        <div className="card-title">Final Preview</div>
+                        <div className="postcard-wrapper">
+                            <div ref={postcardRef}>
+                                <MemoryCard
+                                    templateId={template}
+                                    images={imagePreviews.map(src => ({ src }))} // Pass the full array of previews
+                                    caption={message}
+                                    date={new Date().toLocaleDateString("en-US", { 
+                                        year: "numeric", 
+                                        month: "long", 
+                                        day: "numeric" 
+                                    })}
+                                    tag={recipient || "Memory"}
+                                />
+                            </div>
+                        </div>
+                        <div className="btn-row">
+                            <button className="btn-ghost" onClick={() => setStep(3)}>← Edit</button>
+                            <button className="btn-primary" onClick={handleDownload}>Download Image</button>
+                        </div>
                     </div>
-
-                    <div className="hint" style={{ marginBottom: "1rem" }}>
-                      You can edit the message directly on the postcard above ↑
-                    </div>
-
-                    <div className="btn-row">
-                      <button className="btn-ghost" onClick={() => setStep(2)}>← Edit</button>
-                      <button className="btn-ghost" onClick={handleGenerate}>
-                        Regenerate ↺
-                      </button>
-                      <button className="btn-primary" onClick={handleDownload}>
-                        Download / Print
-                      </button>
-                    </div>
-                  </div>
                 )}
             </div>
         </>
