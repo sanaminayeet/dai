@@ -546,16 +546,20 @@ export default function PostcardCreator() {
 
         <div className="steps">
           {["Upload", "Compose", "Preview"].map((s, i) => (
-            <>
-              {i > 0 && <div className="step-divider" key={`d${i}`} />}
+            <div key={s} style={{ display: "flex", alignItems: "center" }}>
+              {i > 0 && <div className="step-divider" />}
+
               <div
-                key={s}
-                className={`step-item ${step === i + 1 ? "active" : step > i + 1 ? "done" : ""}`}
+                className={`step-item ${
+                  step === i + 1 ? "active" : step > i + 1 ? "done" : ""
+                }`}
               >
-                <div className="step-num">{step > i + 1 ? "✓" : i + 1}</div>
+                <div className="step-num">
+                  {step > i + 1 ? "✓" : i + 1}
+                </div>
                 {s}
               </div>
-            </>
+            </div>
           ))}
         </div>
 
