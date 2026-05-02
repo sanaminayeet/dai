@@ -1,11 +1,9 @@
 "use client"
 
-
 import { useState, useRef, useCallback } from "react";
 import { TEMPLATES, MemoryCard } from "./memorycardtemplatex";
 
 const API_KEY = process.env.NEXT_PUBLIC_GEMINI_API_KEY;
-
 
 const fileToBase64 = (file) =>
     new Promise((resolve, reject) => {
@@ -15,19 +13,12 @@ const fileToBase64 = (file) =>
         reader.readAsDataURL(file);
     });
 
-
 const generatePostcardMessage = async (imageFiles, userContext = "", recipient = "", language = "English") => {
-    if (!API_KEY) {
-        throw new Error("API Key is missing.");
-    }
+    if (!API_KEY) throw new Error("API Key is missing.");
 
-    // Convert all selected files to Base64
     const imageParts = await Promise.all(
         imageFiles.filter(Boolean).map(async (file) => ({
-            inline_data: {
-                mime_type: file.type,
-                data: await fileToBase64(file)
-            }
+            inline_data: { mime_type: file.type, data: await fileToBase64(file) }
         }))
     );
 
@@ -47,14 +38,7 @@ Write in first person. Do not add any preamble or sign-off—just the message bo
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
-                contents: [
-                    {
-                        parts: [
-                            ...imageParts, // Spread all images into the prompt
-                            { text: prompt },
-                        ],
-                    },
-                ],
+                contents: [{ parts: [...imageParts, { text: prompt }] }],
                 generationConfig: { temperature: 0.9, maxOutputTokens: 150 },
             }),
         }
@@ -69,14 +53,12 @@ Write in first person. Do not add any preamble or sign-off—just the message bo
     return data.candidates[0].content.parts[0].text.trim();
 };
 
-
 const STYLES = [
     { id: "classic", label: "Classic", bg: "#fef9f0", accent: "#c8a96e", border: "#e8d5a0" },
     { id: "polaroid", label: "Polaroid", bg: "#f8f8f8", accent: "#333", border: "#ddd" },
     { id: "vintage", label: "Vintage", bg: "#f5ede0", accent: "#8b4513", border: "#c4956a" },
     { id: "minimal", label: "Minimal", bg: "#ffffff", accent: "#000", border: "#e0e0e0" },
 ];
-
 
 export default function PostcardCreator() {
     const [language, setLanguage] = useState("English");
@@ -85,55 +67,31 @@ export default function PostcardCreator() {
     const [style, setStyle] = useState(STYLES[0]);
     const [imageFiles, setImageFiles] = useState([]);
     const [imagePreviews, setImagePreviews] = useState([]);
-    const [imagePreview, setImagePreview] = useState(null);
     const [recipient, setRecipient] = useState("");
     const [context, setContext] = useState("");
     const [message, setMessage] = useState("");
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
-    const [dragging, setDragging] = useState(false);
-    const fileInputRefs = useRef([]); 
+    const fileInputRefs = useRef([]);
     const postcardRef = useRef();
 
     const selectedTemplate = TEMPLATES.find((t) => t.id === template);
 
-    // Sample image for previews (gradient placeholder)
-    const sampleImage = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='300'%3E%3Cdefs%3E%3ClinearGradient id='grad' x1='0%25' y1='0%25' x2='100%25' y2='100%25'%3E%3Cstop offset='0%25' style='stop-color:rgb(200,160,100);stop-opacity:1' /%3E%3Cstop offset='100%25' style='stop-color:rgb(100,80,60);stop-opacity:1' /%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='400' height='300' fill='url(%23grad)'/%3E%3Ccircle cx='100' cy='80' r='40' fill='rgba(255,255,255,0.3)'/%3E%3Ctext x='200' y='150' font-size='20' fill='rgba(255,255,255,0.6)' text-anchor='middle' font-family='serif'%3ESample%3C/text%3E%3C/svg%3E";
-
-
     const handleFile = useCallback((file, index) => {
         if (!file || !file.type.startsWith("image/")) return;
-
         const reader = new FileReader();
         reader.onload = (e) => {
-            setImagePreviews(prev => {
-                const newPreviews = [...prev];
-                newPreviews[index] = e.target.result;
-                return newPreviews;
-            });
-            setImageFiles(prev => {
-                const newFiles = [...prev];
-                newFiles[index] = file;
-                return newFiles;
-            });
+            setImagePreviews(prev => { const n = [...prev]; n[index] = e.target.result; return n; });
+            setImageFiles(prev => { const n = [...prev]; n[index] = file; return n; });
         };
         reader.readAsDataURL(file);
     }, []);
-
-
-    const handleDrop = (e) => {
-        e.preventDefault();
-        setDragging(false);
-        handleFile(e.dataTransfer.files[0]);
-    };
-
 
     const handleGenerate = async () => {
         if (imageFiles.filter(Boolean).length === 0) return;
         setLoading(true);
         setError("");
         try {
-            // Now passing the entire array of files
             const msg = await generatePostcardMessage(imageFiles, context, recipient, language);
             setMessage(msg);
             setStep(4);
@@ -143,7 +101,6 @@ export default function PostcardCreator() {
             setLoading(false);
         }
     };
-
 
     const handleDownload = async () => {
         if (!postcardRef.current) return;
@@ -159,13 +116,10 @@ export default function PostcardCreator() {
         }
     };
 
-
     const css = `
     @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;1,400&family=DM+Mono:wght@400;500&family=Lato:wght@300;400;700&display=swap');
 
-
     * { box-sizing: border-box; margin: 0; padding: 0; }
-
 
     .app {
       min-height: 100vh;
@@ -175,12 +129,7 @@ export default function PostcardCreator() {
       padding: 2rem 1rem;
     }
 
-
-    .header {
-      text-align: center;
-      margin-bottom: 2.5rem;
-    }
-
+    .header { text-align: center; margin-bottom: 2.5rem; }
 
     .logo {
       font-family: 'Playfair Display', serif;
@@ -189,7 +138,6 @@ export default function PostcardCreator() {
       letter-spacing: -0.5px;
       color: #e8d5a0;
     }
-
 
     .tagline {
       font-size: 13px;
@@ -200,14 +148,12 @@ export default function PostcardCreator() {
       font-family: 'DM Mono', monospace;
     }
 
-
     .steps {
       display: flex;
       justify-content: center;
       gap: 0;
       margin-bottom: 2rem;
     }
-
 
     .step-item {
       display: flex;
@@ -220,10 +166,8 @@ export default function PostcardCreator() {
       text-transform: uppercase;
     }
 
-
     .step-item.active { color: #e8d5a0; }
     .step-item.done { color: #8a7e6e; }
-
 
     .step-num {
       width: 24px; height: 24px;
@@ -233,12 +177,7 @@ export default function PostcardCreator() {
       font-size: 11px;
     }
 
-
-    .step-item.active .step-num {
-      background: #e8d5a0;
-      color: #1a1612;
-    }
-
+    .step-item.active .step-num { background: #e8d5a0; color: #1a1612; }
 
     .step-divider {
       width: 40px; height: 1px;
@@ -247,44 +186,28 @@ export default function PostcardCreator() {
       align-self: center;
     }
 
-
     .card {
-        background: #221e19;
-        border: 1px solid #3a3028;
-        border-radius: 16px;
-        padding: 2rem;
-        max-width: 700px;
-        width: 100%;
-        margin: 0 auto 1.5rem;
-        display: flex;
-        flex-direction: column;
+      background: #221e19;
+      border: 1px solid #3a3028;
+      border-radius: 16px;
+      padding: 2rem;
+      max-width: 700px;
+      width: 100%;
+      margin: 0 auto 1.5rem;
+      display: flex;
+      flex-direction: column;
     }
-
 
     @media (max-width: 768px) {
-        .card {
-            max-width: 100%;
-            padding: 1rem;
-        }
-        .style-grid {
-            grid-template-columns: repeat(2, 1fr);
-        }
+      .card { max-width: 100%; padding: 1rem; }
+      .template-grid { grid-template-columns: repeat(2, 1fr) !important; }
     }
-
 
     @media (max-width: 480px) {
-        .card-title {
-            font-size: 1.1rem;
-        }
-        .btn-row {
-            flex-direction: column;
-            gap: 8px;
-        }
-        .btn-primary, .btn-ghost {
-            width: 100%;
-        }
+      .card-title { font-size: 1.1rem; }
+      .btn-row { flex-direction: column; gap: 8px; }
+      .btn-primary, .btn-ghost { width: 100%; }
     }
-
 
     .card-title {
       font-family: 'Playfair Display', serif;
@@ -293,38 +216,27 @@ export default function PostcardCreator() {
       margin-bottom: 1.5rem;
     }
 
-
     .upload-zone {
       border: 1.5px dashed #3a3028;
       border-radius: 12px;
-      padding: 3rem 2rem;
+      padding: 2rem 1rem;
       text-align: center;
       cursor: pointer;
       transition: border-color 0.2s, background 0.2s;
       background: #1a1612;
-    }
-
-
-    .upload-zone:hover, .upload-zone.dragging {
-      border-color: #c8a96e;
-      background: #201c17;
-    }
-
-
-    .upload-slot {
       display: flex;
-      flex-direction: column;
-      gap: 8px;
+      align-items: center;
+      justify-content: center;
+      min-height: 80px;
+      color: #5a5044;
+      font-size: 14px;
     }
 
+    .upload-zone:hover { border-color: #c8a96e; background: #201c17; color: #c8a96e; }
 
-    .preview-container {
-      position: relative;
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-    }
+    .upload-slot { display: flex; flex-direction: column; gap: 8px; }
 
+    .preview-container { display: flex; flex-direction: column; gap: 8px; }
 
     .remove-btn {
       background: #5a5044;
@@ -337,60 +249,16 @@ export default function PostcardCreator() {
       align-self: flex-start;
     }
 
-
-    .remove-btn:hover {
-      background: #7a6e5e;
-    }
-
-
-    .upload-icon {
-      width: 48px; height: 48px;
-      border-radius: 50%;
-      background: #2a2520;
-      border: 1px solid #3a3028;
-      display: flex; align-items: center; justify-content: center;
-      margin: 0 auto 1rem;
-    }
-
-
-    .upload-text { color: #8a7e6e; font-size: 14px; line-height: 1.6; }
-    .upload-text strong { color: #c8a96e; }
-
-
-    .preview-img {
-      width: 100%; max-height: 280px;
-      object-fit: cover;
-      border-radius: 10px;
-      border: 1px solid #3a3028;
-      display: block;
-      margin-bottom: 1rem;
-    }
+    .remove-btn:hover { background: #7a6e5e; }
 
     .preview-img-small {
-        width: 100%;
-        height: 150px;
-        object-fit: cover;
-        border-radius: 8px;
-        border: 1px solid #3a3028;
-        background: #111;
-    }
-
-    .change-btn {
-      background: none;
+      width: 100%;
+      height: 150px;
+      object-fit: cover;
+      border-radius: 8px;
       border: 1px solid #3a3028;
-      color: #8a7e6e;
-      font-size: 12px;
-      padding: 6px 14px;
-      border-radius: 6px;
-      cursor: pointer;
-      font-family: 'DM Mono', monospace;
-      letter-spacing: 0.5px;
-      transition: border-color 0.2s, color 0.2s;
+      background: #111;
     }
-
-
-    .change-btn:hover { border-color: #c8a96e; color: #c8a96e; }
-
 
     label {
       display: block;
@@ -402,9 +270,7 @@ export default function PostcardCreator() {
       margin-bottom: 8px;
     }
 
-
     .field-group { margin-bottom: 1.25rem; }
-
 
     input[type="text"], textarea {
       width: 100%;
@@ -420,17 +286,18 @@ export default function PostcardCreator() {
       resize: none;
     }
 
-
-    input[type="text"]:focus, textarea:focus {
-      border-color: #c8a96e;
-    }
-
-
+    input[type="text"]:focus, textarea:focus { border-color: #c8a96e; }
     input::placeholder, textarea::placeholder { color: #5a5044; }
-
 
     .hint { font-size: 12px; color: #5a5044; margin-top: 6px; }
 
+    .template-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
+      margin-top: 8px;
+      align-items: stretch;
+    }
 
     .style-grid {
       display: grid;
@@ -438,7 +305,6 @@ export default function PostcardCreator() {
       gap: 8px;
       margin-top: 8px;
     }
-
 
     .style-chip {
       padding: 8px 6px;
@@ -450,13 +316,40 @@ export default function PostcardCreator() {
       color: #8a7e6e;
       transition: all 0.15s;
       font-family: 'DM Mono', monospace;
-      position: relative;
+      min-height: 60px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
     }
-
 
     .style-chip:hover { border-color: #c8a96e; color: #c8a96e; }
     .style-chip.selected { border-color: #c8a96e; color: #e8d5a0; background: #2a2217; }
 
+    .template-chip {
+      width: 100%;
+      height: 100%;
+      min-height: 80px;
+      padding: 12px 8px;
+      border-radius: 8px;
+      border: 1px solid #3a3028;
+      cursor: pointer;
+      text-align: center;
+      font-size: 12px;
+      color: #8a7e6e;
+      transition: all 0.15s;
+      font-family: 'DM Mono', monospace;
+      background: transparent;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+    }
+
+    .template-chip:hover { border-color: #c8a96e; color: #c8a96e; }
+    .template-chip.selected { border-color: #c8a96e; color: #e8d5a0; background: #2a2217; }
 
     .style-dot {
       width: 20px; height: 20px;
@@ -465,9 +358,7 @@ export default function PostcardCreator() {
       border: 1px solid rgba(255,255,255,0.1);
     }
 
-
     .btn-row { display: flex; gap: 10px; margin-top: 1.5rem; }
-
 
     .btn-primary {
       flex: 1;
@@ -484,11 +375,9 @@ export default function PostcardCreator() {
       transition: background 0.2s, transform 0.1s;
     }
 
-
     .btn-primary:hover { background: #d9bb7f; }
     .btn-primary:active { transform: scale(0.98); }
     .btn-primary:disabled { background: #3a3028; color: #5a5044; cursor: not-allowed; }
-
 
     .btn-ghost {
       background: none;
@@ -502,9 +391,7 @@ export default function PostcardCreator() {
       transition: border-color 0.2s, color 0.2s;
     }
 
-
     .btn-ghost:hover { border-color: #8a7e6e; color: #f0ebe3; }
-
 
     .error {
       background: #2a1515;
@@ -517,7 +404,6 @@ export default function PostcardCreator() {
       font-family: 'DM Mono', monospace;
     }
 
-
     .loader {
       display: flex; align-items: center; gap: 10px;
       color: #8a7e6e; font-size: 13px;
@@ -525,7 +411,6 @@ export default function PostcardCreator() {
       justify-content: center;
       padding: 0.5rem 0;
     }
-
 
     .spin {
       width: 16px; height: 16px;
@@ -535,11 +420,8 @@ export default function PostcardCreator() {
       animation: spin 0.7s linear infinite;
     }
 
-
     @keyframes spin { to { transform: rotate(360deg); } }
 
-
-    /* Postcard preview */
     .postcard {
       border-radius: 12px;
       overflow: hidden;
@@ -548,42 +430,28 @@ export default function PostcardCreator() {
       font-family: 'Lato', sans-serif;
     }
 
-
     .pc-photo {
-        width: 100%;
-        height: 100%;
-        display: block;
-        object-fit: cover;
-        object-position: center;
-        background-color: transparent;
+      width: 100%; height: 100%;
+      display: block;
+      object-fit: cover;
+      object-position: center;
     }
 
     .postcard-wrapper {
-        width: 100%;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        overflow-x: auto;
-        border-radius: 12px;
-        padding-bottom: 0.5rem;
+      width: 100%;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      overflow-x: auto;
+      border-radius: 12px;
+      padding-bottom: 0.5rem;
     }
 
-    .postcard-wrapper > div {
-        width: 100%;
-        max-width: 640px;
-    }
+    .postcard-wrapper > div { width: 100%; max-width: 640px; }
 
-    .pc-body {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-    }
+    .pc-body { display: grid; grid-template-columns: 1fr 1fr; }
 
-
-    .pc-left {
-      padding: 1.25rem;
-      border-right: 1px dashed rgba(0,0,0,0.15);
-    }
-
+    .pc-left { padding: 1.25rem; border-right: 1px dashed rgba(0,0,0,0.15); }
 
     .pc-label {
       font-size: 10px;
@@ -594,60 +462,34 @@ export default function PostcardCreator() {
       font-family: 'DM Mono', monospace;
     }
 
-
     .pc-message-text {
-      font-size: 13px;
-      line-height: 1.7;
-      width: 100%;
-      border: none;
-      outline: none;
-      resize: none;
-      background: transparent;
+      font-size: 13px; line-height: 1.7;
+      width: 100%; border: none; outline: none;
+      resize: none; background: transparent;
       font-family: 'Lato', sans-serif;
     }
 
-
-    .pc-right {
-      padding: 1.25rem;
-      display: flex;
-      flex-direction: column;
-    }
-
+    .pc-right { padding: 1.25rem; display: flex; flex-direction: column; }
 
     .pc-stamp {
       width: 48px; height: 58px;
       border-radius: 4px;
       display: flex; align-items: center; justify-content: center;
-      font-size: 9px;
-      text-align: center;
+      font-size: 9px; text-align: center;
       font-family: 'DM Mono', monospace;
       letter-spacing: 0.5px;
-      margin-left: auto;
-      margin-bottom: 12px;
+      margin-left: auto; margin-bottom: 12px;
       border: 1px dashed rgba(0,0,0,0.2);
-      line-height: 1.4;
-      opacity: 0.7;
+      line-height: 1.4; opacity: 0.7;
     }
-
 
     .pc-to { font-size: 11px; opacity: 0.4; margin-bottom: 4px; font-family: 'DM Mono', monospace; }
     .pc-recipient { font-size: 15px; font-weight: 700; margin-bottom: 2px; }
     .pc-subtitle { font-size: 12px; opacity: 0.5; }
 
-
-    .pc-lines {
-      margin-top: auto;
-      padding-top: 12px;
-    }
-
-
-    .pc-line {
-      height: 1px;
-      background: rgba(0,0,0,0.1);
-      margin-bottom: 10px;
-    }
+    .pc-lines { margin-top: auto; padding-top: 12px; }
+    .pc-line { height: 1px; background: rgba(0,0,0,0.1); margin-bottom: 10px; }
   `;
-
 
     return (
         <>
@@ -658,53 +500,31 @@ export default function PostcardCreator() {
                     <div className="tagline">how was your dAI?</div>
                 </div>
 
-
                 <div className="steps">
                     {["Template", "Upload", "Compose", "Preview"].map((s, i) => (
                         <div key={s} style={{ display: "flex", alignItems: "center" }}>
                             {i > 0 && <div className="step-divider" />}
-
-                            <div
-                                className={`step-item ${step === i + 1 ? "active" : step > i + 1 ? "done" : ""
-                                    }`}
-                            >
-                                <div className="step-num">
-                                    {step > i + 1 ? "✓" : i + 1}
-                                </div>
+                            <div className={`step-item ${step === i + 1 ? "active" : step > i + 1 ? "done" : ""}`}>
+                                <div className="step-num">{step > i + 1 ? "✓" : i + 1}</div>
                                 {s}
                             </div>
                         </div>
                     ))}
                 </div>
 
-
                 {/* Step 1 — Template Selection */}
                 {step === 1 && (
                     <div className="card">
                         <div className="card-title">Choose a template</div>
-
-                        <div className="style-grid">
+                        <div className="template-grid">
                             {TEMPLATES.map((t) => (
-                                <div key={t.id}>
+                                // ← wrapper div uses display:flex so height:100% works on the button
+                                <div key={t.id} style={{ display: "flex" }}>
                                     <button
-                                        className={`style-chip ${template === t.id ? "selected" : ""}`}
+                                        className={`template-chip ${template === t.id ? "selected" : ""}`}
                                         onClick={() => setTemplate(t.id)}
-                                        style={{
-                                            display: "flex",
-                                            flexDirection: "column",
-                                            alignItems: "center",
-                                            gap: 6,
-                                            padding: "12px 8px",
-                                            cursor: "pointer",
-                                        }}
                                     >
-                                        <div
-                                            style={{
-                                                fontWeight: 500,
-                                                fontSize: "11px",
-                                                letterSpacing: "0.5px",
-                                            }}
-                                        >
+                                        <div style={{ fontWeight: 500, fontSize: "11px", letterSpacing: "0.5px" }}>
                                             {t.label}
                                         </div>
                                         <div style={{ fontSize: "10px", opacity: 0.7 }}>
@@ -717,60 +537,47 @@ export default function PostcardCreator() {
                                 </div>
                             ))}
                         </div>
-
                         <div className="btn-row">
-                            <button
-                                className="btn-primary"
-                                onClick={() => setStep(2)}
-                            >
-                                Next →
-                            </button>
+                            <button className="btn-primary" onClick={() => setStep(2)}>Next →</button>
                         </div>
                     </div>
                 )}
 
                 {/* Step 2 — Upload */}
-                {/* Step 2 — Upload */}
                 {step === 2 && (
                     <div className="card">
                         <div className="card-title">Upload photos ({selectedTemplate?.slots} required)</div>
-                        
-                        <div style={{ 
-                            display: "grid", 
-                            gridTemplateColumns: selectedTemplate?.slots > 1 ? "1fr 1fr" : "1fr", 
-                            gap: "1rem" 
+                        <div style={{
+                            display: "grid",
+                            gridTemplateColumns: selectedTemplate?.slots > 1 ? "1fr 1fr" : "1fr",
+                            gap: "1rem"
                         }}>
                             {Array.from({ length: selectedTemplate?.slots }).map((_, i) => (
                                 <div key={i} className="upload-slot">
                                     <label>Photo {i + 1}</label>
                                     {!imagePreviews[i] ? (
-                                        <div 
-                                            className="upload-zone small"
+                                        <div
+                                            className="upload-zone"
                                             onClick={() => fileInputRefs.current[i].click()}
                                         >
-                                            <span>+ Add</span>
+                                            <span>+ Add photo</span>
                                         </div>
                                     ) : (
                                         <div className="preview-container">
-                                            <img src={imagePreviews[i]} className="preview-img-small" />
-                                            <button 
-                                                className="remove-btn" 
+                                            <img src={imagePreviews[i]} className="preview-img-small" alt="" />
+                                            <button
+                                                className="remove-btn"
                                                 onClick={() => {
-                                                    const nextP = [...imagePreviews];
-                                                    nextP[i] = null;
-                                                    setImagePreviews(nextP);
-
-                                                    const nextF = [...imageFiles];
-                                                    nextF[i] = null;
-                                                    setImageFiles(nextF);
+                                                    const nextP = [...imagePreviews]; nextP[i] = null; setImagePreviews(nextP);
+                                                    const nextF = [...imageFiles]; nextF[i] = null; setImageFiles(nextF);
                                                 }}
                                             >
                                                 Remove
                                             </button>
                                         </div>
                                     )}
-                                    <input 
-                                        type="file" 
+                                    <input
+                                        type="file"
                                         ref={el => fileInputRefs.current[i] = el}
                                         style={{ display: "none" }}
                                         onChange={(e) => handleFile(e.target.files[0], i)}
@@ -778,12 +585,11 @@ export default function PostcardCreator() {
                                 </div>
                             ))}
                         </div>
-
                         <div className="btn-row">
                             <button className="btn-ghost" onClick={() => setStep(1)}>← Back</button>
-                            <button 
-                                className="btn-primary" 
-                                disabled={imageFiles.length < selectedTemplate?.slots}
+                            <button
+                                className="btn-primary"
+                                disabled={imageFiles.filter(Boolean).length < selectedTemplate?.slots}
                                 onClick={() => setStep(3)}
                             >
                                 Next →
@@ -792,12 +598,10 @@ export default function PostcardCreator() {
                     </div>
                 )}
 
-
                 {/* Step 3 — Compose */}
                 {step === 3 && (
                     <div className="card">
                         <div className="card-title">Compose your {selectedTemplate?.label}</div>
-
 
                         <div className="field-group">
                             <label>Who are you writing to?</label>
@@ -816,15 +620,10 @@ export default function PostcardCreator() {
                                 value={language}
                                 onChange={(e) => setLanguage(e.target.value)}
                                 style={{
-                                    width: "100%",
-                                    background: "#1a1612",
-                                    border: "1px solid #3a3028",
-                                    borderRadius: "8px",
-                                    padding: "10px 14px",
-                                    color: "#f0ebe3",
-                                    fontSize: "14px",
-                                    fontFamily: "Lato, sans-serif",
-                                    outline: "none",
+                                    width: "100%", background: "#1a1612",
+                                    border: "1px solid #3a3028", borderRadius: "8px",
+                                    padding: "10px 14px", color: "#f0ebe3",
+                                    fontSize: "14px", fontFamily: "Lato, sans-serif", outline: "none",
                                 }}
                             >
                                 <option value="English">English</option>
@@ -844,13 +643,12 @@ export default function PostcardCreator() {
                             <label>Any context? (optional)</label>
                             <textarea
                                 rows={3}
-                                placeholder="e.g. We just hiked the trail and it was exhausting but worth it. The sunset was incredible…"
+                                placeholder="e.g. We just hiked the trail and it was exhausting but worth it…"
                                 value={context}
                                 onChange={(e) => setContext(e.target.value)}
                             />
                             <div className="hint">Leave blank and Gemini will write based on the photo alone</div>
                         </div>
-
 
                         <div className="field-group">
                             <label>Postcard style</label>
@@ -868,17 +666,11 @@ export default function PostcardCreator() {
                             </div>
                         </div>
 
-
                         {error && <div className="error">{error}</div>}
-
 
                         <div className="btn-row">
                             <button className="btn-ghost" onClick={() => setStep(2)}>← Back</button>
-                            <button
-                                className="btn-primary"
-                                disabled={loading}
-                                onClick={handleGenerate}
-                            >
+                            <button className="btn-primary" disabled={loading} onClick={handleGenerate}>
                                 {loading
                                     ? <span className="loader"><span className="spin" /> Gemini is writing…</span>
                                     : "Generate with Gemini ✦"}
@@ -886,7 +678,6 @@ export default function PostcardCreator() {
                         </div>
                     </div>
                 )}
-
 
                 {/* Step 4 — Preview */}
                 {step === 4 && (
@@ -896,12 +687,10 @@ export default function PostcardCreator() {
                             <div ref={postcardRef}>
                                 <MemoryCard
                                     templateId={template}
-                                    images={imagePreviews.map(src => ({ src }))} // Pass the full array of previews
+                                    images={imagePreviews.map(src => ({ src }))}
                                     caption={message}
-                                    date={new Date().toLocaleDateString("en-US", { 
-                                        year: "numeric", 
-                                        month: "long", 
-                                        day: "numeric" 
+                                    date={new Date().toLocaleDateString("en-US", {
+                                        year: "numeric", month: "long", day: "numeric"
                                     })}
                                     tag={recipient || "Memory"}
                                 />
