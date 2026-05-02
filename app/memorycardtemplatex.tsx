@@ -14,11 +14,7 @@ export type TemplateId =
   | "scrapbook"
   | "journal"
   | "corkboard"
-  | "pile"
-  | "morningpages"
-  | "fieldnotes"
-  | "weeklyspread"
-  | "letterpress";
+  | "pile";
 
 export interface CardImage {
   src: string; // data URL or remote URL
@@ -588,10 +584,9 @@ const TemplatePostcard = forwardRef<HTMLDivElement, MemoryCardProps>(
   }
 );
 TemplatePostcard.displayName = "TemplatePostcard";
-
 // ─── Template 7 · Scrapbook — 5 photos, torn edges, tape, overlapping ────────
 // Best for: birthday parties, group trips, chaotic fun days.
-
+ 
 const TemplateScrapbook = forwardRef<HTMLDivElement, MemoryCardProps>(
   ({ images, caption, date, tag }, ref) => {
     // Each photo card: [top, left, rotate, width, height, zIndex]
@@ -623,7 +618,7 @@ const TemplateScrapbook = forwardRef<HTMLDivElement, MemoryCardProps>(
           backgroundSize: "24px 24px",
         }} />
         <GrainOverlay />
-
+ 
         {slots.map(([top, left, rotate, w, h, z], i) => (
           <div
             key={i}
@@ -651,7 +646,7 @@ const TemplateScrapbook = forwardRef<HTMLDivElement, MemoryCardProps>(
             <ImageSlot image={images[i]} style={{ width: "100%", height: h, display: "block", objectFit: "contain"  }} />
           </div>
         ))}
-
+ 
         {/* caption sticker */}
         <div style={{
           position: "absolute", bottom: 16, right: 20, zIndex: 10,
@@ -669,10 +664,10 @@ const TemplateScrapbook = forwardRef<HTMLDivElement, MemoryCardProps>(
   }
 );
 TemplateScrapbook.displayName = "TemplateScrapbook";
-
+ 
 // ─── Template 8 · Journal — ruled page, 3 photos, handwritten annotations ────
 // Best for: everyday moments, travel diary, reflective mood.
-
+ 
 const TemplateJournal = forwardRef<HTMLDivElement, MemoryCardProps>(
   ({ images, caption, date, tag }, ref) => {
     return (
@@ -698,10 +693,10 @@ const TemplateJournal = forwardRef<HTMLDivElement, MemoryCardProps>(
             zIndex: 3,
           }} />
         ))}
-
+ 
         <div style={{ flex: 1, padding: "28px 28px 24px 64px", display: "flex", flexDirection: "column", gap: 0 }}>
           <GrainOverlay />
-
+ 
           {/* ruled lines background */}
           {Array.from({ length: 18 }).map((_, i) => (
             <div key={i} style={{
@@ -712,12 +707,12 @@ const TemplateJournal = forwardRef<HTMLDivElement, MemoryCardProps>(
               background: "rgba(150,170,210,0.18)",
             }} />
           ))}
-
+ 
           {/* date header */}
           <div style={{ fontFamily: fonts.mono, fontSize: 10, color: palette.warmGray, letterSpacing: "0.1em", marginBottom: 16, zIndex: 2 }}>
             {date ?? "—"} {tag ? `· ${tag}` : ""}
           </div>
-
+ 
           {/* Main layout: big photo left, two stacked right */}
           <div style={{ display: "flex", gap: 14, zIndex: 2, marginBottom: 16 }}>
             <div style={{
@@ -748,7 +743,7 @@ const TemplateJournal = forwardRef<HTMLDivElement, MemoryCardProps>(
               </div>
             </div>
           </div>
-
+ 
           {/* handwritten-style caption */}
           {caption && (
             <div style={{ zIndex: 2, paddingLeft: 4 }}>
@@ -766,10 +761,10 @@ const TemplateJournal = forwardRef<HTMLDivElement, MemoryCardProps>(
   }
 );
 TemplateJournal.displayName = "TemplateJournal";
-
+ 
 // ─── Template 9 · Corkboard — 6 photos pinned at angles with pushpins ────────
 // Best for: group photos, event recaps, holiday memories.
-
+ 
 const TemplateCorkboard = forwardRef<HTMLDivElement, MemoryCardProps>(
   ({ images, caption, date, tag }, ref) => {
     const slots: [number, number, number, number, number][] = [
@@ -798,7 +793,7 @@ const TemplateCorkboard = forwardRef<HTMLDivElement, MemoryCardProps>(
         }}
       >
         <GrainOverlay />
-
+ 
         {slots.map(([top, left, rotate, w, h], i) => (
           <div key={i} style={{ position: "absolute", top, left, zIndex: i + 1 }}>
             {/* pushpin */}
@@ -823,7 +818,7 @@ const TemplateCorkboard = forwardRef<HTMLDivElement, MemoryCardProps>(
             </div>
           </div>
         ))}
-
+ 
         {/* sticky note caption */}
         {(caption || date || tag) && (
           <div style={{
@@ -844,18 +839,18 @@ const TemplateCorkboard = forwardRef<HTMLDivElement, MemoryCardProps>(
   }
 );
 TemplateCorkboard.displayName = "TemplateCorkboard";
-
+ 
 // ─── Template 10 · Pile — photos loosely stacked/scattered, fan-out feel ─────
 // Best for: a single dump of memories, "the whole roll" energy.
-
+ 
 const TemplatePile = forwardRef<HTMLDivElement, MemoryCardProps>(
   ({ images, caption, date, tag }, ref) => {
     // back cards first (low z), front card last (high z, centered)
     const back: [number, number, number, number, number][] = [
-      [20,  60,  -12, 280, 210],
+      [30,  60,  -12, 280, 210],
       [25, 300,   10, 270, 205],
-      [150, 10,  8, 265, 200],
-      [145, 330,   -8, 275, 205],
+      [40,  20,    6, 265, 200],
+      [35, 330,   -8, 275, 205],
     ];
     return (
       <div
@@ -877,7 +872,7 @@ const TemplatePile = forwardRef<HTMLDivElement, MemoryCardProps>(
           backgroundImage: "radial-gradient(circle at 50% 50%, #2E261E 0%, #1E1610 100%)",
         }} />
         <GrainOverlay />
-
+ 
         {/* back scattered photos */}
         {back.map(([top, left, rotate, w, h], i) => (
           <div key={i} style={{
@@ -893,12 +888,10 @@ const TemplatePile = forwardRef<HTMLDivElement, MemoryCardProps>(
             <ImageSlot image={images[i + 1]} style={{ width: "100%", height: h, objectFit: "contain"  }} />
           </div>
         ))}
-
+ 
         {/* front hero photo — centered, slight tilt */}
         <div style={{
-          position: "absolute",
-          top: 80,
-          left: 150,
+          position: "relative",
           background: "#FDFAF5",
           padding: "8px 8px 36px",
           boxShadow: "4px 8px 28px rgba(0,0,0,0.65)",
@@ -1420,22 +1413,18 @@ export type TemplateEntry = {
   slots: number;
   component: React.ForwardRefExoticComponent<MemoryCardProps & React.RefAttributes<HTMLDivElement>>;
 };
-
+ 
 export const TEMPLATES: TemplateEntry[] = [
-  { id: "solo",          label: "Solo",           description: "1 hero photo, full bleed",              slots: 1, component: TemplateSolo },
-  { id: "diptych",       label: "Diptych",        description: "2 photos side by side",                 slots: 2, component: TemplateDiptych },
-  { id: "triptych",      label: "Triptych",        description: "3 photos — 1 big + 2 small",            slots: 3, component: TemplateTriptych },
-  { id: "polaroid",      label: "Polaroid",        description: "1 photo, classic white border",         slots: 1, component: TemplatePolaroid },
-  { id: "filmstrip",     label: "Film Strip",      description: "4 frames like 35mm film",               slots: 4, component: TemplateFilmstrip },
-  { id: "postcard",      label: "Postcard",        description: "Photo + ruled writing area",            slots: 1, component: TemplatePostcard },
-  { id: "scrapbook",     label: "Scrapbook",       description: "5 photos, tape, graph paper chaos",     slots: 5, component: TemplateScrapbook },
-  { id: "journal",       label: "Journal",         description: "3 photos on a ruled diary page",        slots: 3, component: TemplateJournal },
-  { id: "corkboard",     label: "Corkboard",       description: "6 photos pinned with pushpins",         slots: 6, component: TemplateCorkboard },
-  { id: "pile",          label: "Pile",            description: "5 photos scattered on a dark table",    slots: 5, component: TemplatePile },
-  { id: "morningpages",  label: "Morning Pages",   description: "Ruled page, flowers, 1 photo + writing",slots: 1, component: TemplateMorningPages },
-  { id: "fieldnotes",    label: "Field Notes",     description: "2-col reporter style, 2 photos",        slots: 2, component: TemplateFieldNotes },
-  { id: "weeklyspread",  label: "Weekly Spread",   description: "Bullet journal 2-page spread, 3 photos",slots: 3, component: TemplateWeeklySpread },
-  { id: "letterpress",   label: "Letterpress",     description: "Ornate border, 1 photo, large quote",   slots: 1, component: TemplateLetterpress },
+  { id: "solo",       label: "Solo",        description: "1 hero photo, full bleed",           slots: 1, component: TemplateSolo },
+  { id: "diptych",    label: "Diptych",     description: "2 photos side by side",              slots: 2, component: TemplateDiptych },
+  { id: "triptych",   label: "Triptych",    description: "3 photos — 1 big + 2 small",         slots: 3, component: TemplateTriptych },
+  { id: "polaroid",   label: "Polaroid",    description: "1 photo, classic white border",      slots: 1, component: TemplatePolaroid },
+  { id: "filmstrip",  label: "Film Strip",  description: "4 frames like 35mm film",            slots: 4, component: TemplateFilmstrip },
+  { id: "postcard",   label: "Postcard",    description: "Photo + ruled writing area",         slots: 1, component: TemplatePostcard },
+  { id: "scrapbook",  label: "Scrapbook",   description: "5 photos, tape, graph paper chaos",  slots: 5, component: TemplateScrapbook },
+  { id: "journal",    label: "Journal",     description: "3 photos on a ruled diary page",     slots: 3, component: TemplateJournal },
+  { id: "corkboard",  label: "Corkboard",   description: "6 photos pinned with pushpins",      slots: 6, component: TemplateCorkboard },
+  { id: "pile",       label: "Pile",        description: "5 photos scattered on a dark table", slots: 5, component: TemplatePile },
 ];
 
 // ─── Main export: MemoryCard dispatcher ───────────────────────────────────────
