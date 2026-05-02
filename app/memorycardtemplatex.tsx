@@ -10,7 +10,11 @@ export type TemplateId =
   | "triptych"
   | "polaroid"
   | "filmstrip"
-  | "postcard";
+  | "postcard"
+  | "scrapbook"
+  | "journal"
+  | "corkboard"
+  | "pile";
 
 export interface CardImage {
   src: string; // data URL or remote URL
@@ -579,22 +583,354 @@ const TemplatePostcard = forwardRef<HTMLDivElement, MemoryCardProps>(
   }
 );
 TemplatePostcard.displayName = "TemplatePostcard";
+// ─── Template 7 · Scrapbook — 5 photos, torn edges, tape, overlapping ────────
+// Best for: birthday parties, group trips, chaotic fun days.
+ 
+const TemplateScrapbook = forwardRef<HTMLDivElement, MemoryCardProps>(
+  ({ images, caption, date, tag }, ref) => {
+    // Each photo card: [top, left, rotate, width, height, zIndex]
+    const slots: [number, number, number, number, number, number][] = [
+      [18,  16,  -3.5, 240, 180, 1],
+      [12, 230,   2.2, 210, 165, 2],
+      [26, 412,  -1.8, 200, 170, 1],
+      [200,  30,  2.8, 200, 160, 3],
+      [195, 240, -2.0, 230, 165, 2],
+    ];
+    // tape strip colours
+    const tapes = ["rgba(255,235,180,0.55)", "rgba(200,220,255,0.45)", "rgba(255,200,200,0.45)", "rgba(200,255,210,0.45)", "rgba(230,210,255,0.45)"];
+    return (
+      <div
+        ref={ref}
+        style={{
+          width: CARD_W,
+          height: 420,
+          background: "#F0EBE1",
+          position: "relative",
+          overflow: "hidden",
+          fontFamily: fonts.serif,
+        }}
+      >
+        {/* graph paper lines */}
+        <div style={{
+          position: "absolute", inset: 0,
+          backgroundImage: "linear-gradient(rgba(180,160,130,0.13) 1px, transparent 1px), linear-gradient(90deg, rgba(180,160,130,0.13) 1px, transparent 1px)",
+          backgroundSize: "24px 24px",
+        }} />
+        <GrainOverlay />
+ 
+        {slots.map(([top, left, rotate, w, h, z], i) => (
+          <div
+            key={i}
+            style={{
+              position: "absolute",
+              top, left,
+              width: w, height: h + 28,
+              background: "#FDFAF5",
+              transform: `rotate(${rotate}deg)`,
+              zIndex: z,
+              boxShadow: "1px 2px 8px rgba(50,30,10,0.13)",
+              padding: "6px 6px 22px",
+            }}
+          >
+            {/* tape strip */}
+            <div style={{
+              position: "absolute",
+              top: -10, left: "50%",
+              transform: "translateX(-50%)",
+              width: 52, height: 20,
+              background: tapes[i % tapes.length],
+              borderRadius: 2,
+              zIndex: 10,
+            }} />
+            <ImageSlot image={images[i]} style={{ width: "100%", height: h, display: "block" }} />
+          </div>
+        ))}
+ 
+        {/* caption sticker */}
+        <div style={{
+          position: "absolute", bottom: 16, right: 20, zIndex: 10,
+          background: "rgba(255,245,200,0.92)",
+          padding: "8px 14px",
+          transform: "rotate(1.5deg)",
+          boxShadow: "1px 2px 6px rgba(50,30,10,0.10)",
+          maxWidth: 200,
+        }}>
+          {caption && <Caption text={caption} style={{ fontSize: 12, color: palette.espresso }} />}
+          <Meta date={date} tag={tag} style={{ marginTop: 4 }} />
+        </div>
+      </div>
+    );
+  }
+);
+TemplateScrapbook.displayName = "TemplateScrapbook";
+ 
+// ─── Template 8 · Journal — ruled page, 3 photos, handwritten annotations ────
+// Best for: everyday moments, travel diary, reflective mood.
+ 
+const TemplateJournal = forwardRef<HTMLDivElement, MemoryCardProps>(
+  ({ images, caption, date, tag }, ref) => {
+    return (
+      <div
+        ref={ref}
+        style={{
+          width: CARD_W,
+          background: "#FAF7F0",
+          position: "relative",
+          overflow: "hidden",
+          display: "flex",
+          gap: 0,
+        }}
+      >
+        {/* Red margin line */}
+        <div style={{ position: "absolute", left: 52, top: 0, bottom: 0, width: 1, background: "rgba(200,80,80,0.25)", zIndex: 2 }} />
+        {/* Hole punches */}
+        {[48, 140, 232, 324].map((y) => (
+          <div key={y} style={{
+            position: "absolute", left: 14, top: y,
+            width: 16, height: 16, borderRadius: "50%",
+            background: "#E8E0D0", border: "1px solid #D0C8B8",
+            zIndex: 3,
+          }} />
+        ))}
+ 
+        <div style={{ flex: 1, padding: "28px 28px 24px 64px", display: "flex", flexDirection: "column", gap: 0 }}>
+          <GrainOverlay />
+ 
+          {/* ruled lines background */}
+          {Array.from({ length: 18 }).map((_, i) => (
+            <div key={i} style={{
+              position: "absolute",
+              left: 0, right: 0,
+              top: 28 + i * 22,
+              height: 1,
+              background: "rgba(150,170,210,0.18)",
+            }} />
+          ))}
+ 
+          {/* date header */}
+          <div style={{ fontFamily: fonts.mono, fontSize: 10, color: palette.warmGray, letterSpacing: "0.1em", marginBottom: 16, zIndex: 2 }}>
+            {date ?? "—"} {tag ? `· ${tag}` : ""}
+          </div>
+ 
+          {/* Main layout: big photo left, two stacked right */}
+          <div style={{ display: "flex", gap: 14, zIndex: 2, marginBottom: 16 }}>
+            <div style={{
+              background: "#FDFAF5",
+              padding: "5px 5px 20px",
+              boxShadow: "1px 2px 8px rgba(50,30,10,0.10)",
+              transform: "rotate(-1.8deg)",
+              flexShrink: 0,
+            }}>
+              <ImageSlot image={images[0]} style={{ width: 240, height: 190 }} />
+            </div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 10, flex: 1 }}>
+              <div style={{
+                background: "#FDFAF5",
+                padding: "5px 5px 16px",
+                boxShadow: "1px 2px 8px rgba(50,30,10,0.10)",
+                transform: "rotate(1.5deg)",
+              }}>
+                <ImageSlot image={images[1]} style={{ width: "100%", height: 110 }} />
+              </div>
+              <div style={{
+                background: "#FDFAF5",
+                padding: "5px 5px 16px",
+                boxShadow: "1px 2px 8px rgba(50,30,10,0.10)",
+                transform: "rotate(-0.8deg)",
+              }}>
+                <ImageSlot image={images[2]} style={{ width: "100%", height: 100 }} />
+              </div>
+            </div>
+          </div>
+ 
+          {/* handwritten-style caption */}
+          {caption && (
+            <div style={{ zIndex: 2, paddingLeft: 4 }}>
+              <Caption text={caption} style={{
+                fontFamily: fonts.serif,
+                fontSize: 14,
+                color: "#4A3828",
+                lineHeight: 1.8,
+              }} />
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  }
+);
+TemplateJournal.displayName = "TemplateJournal";
+ 
+// ─── Template 9 · Corkboard — 6 photos pinned at angles with pushpins ────────
+// Best for: group photos, event recaps, holiday memories.
+ 
+const TemplateCorkboard = forwardRef<HTMLDivElement, MemoryCardProps>(
+  ({ images, caption, date, tag }, ref) => {
+    const slots: [number, number, number, number, number][] = [
+      [20,  14, -4.0, 175, 140],
+      [14, 210,  3.2, 165, 130],
+      [18, 392, -2.1, 220, 150],
+      [185,  30,  2.5, 190, 145],
+      [180, 238, -3.5, 165, 140],
+      [178, 422,  1.8, 185, 138],
+    ];
+    const pinColors = ["#C94040", "#4060C9", "#40A060", "#C9A030", "#8040C9", "#C94090"];
+    return (
+      <div
+        ref={ref}
+        style={{
+          width: CARD_W,
+          height: 390,
+          position: "relative",
+          overflow: "hidden",
+          background: "#C4A882",
+          backgroundImage: [
+            "radial-gradient(ellipse at 20% 30%, rgba(180,140,90,0.4) 0%, transparent 60%)",
+            "radial-gradient(ellipse at 80% 70%, rgba(140,100,60,0.3) 0%, transparent 50%)",
+            "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='4' height='4'%3E%3Crect width='4' height='4' fill='%23B8966A'/%3E%3Ccircle cx='1' cy='1' r='0.8' fill='%23C4A070' opacity='0.6'/%3E%3Ccircle cx='3' cy='3' r='0.6' fill='%23A88050' opacity='0.5'/%3E%3C/svg%3E\")",
+          ].join(", "),
+        }}
+      >
+        <GrainOverlay />
+ 
+        {slots.map(([top, left, rotate, w, h], i) => (
+          <div key={i} style={{ position: "absolute", top, left, zIndex: i + 1 }}>
+            {/* pushpin */}
+            <div style={{
+              position: "absolute",
+              top: -8, left: "50%",
+              transform: "translateX(-50%)",
+              width: 12, height: 12,
+              borderRadius: "50%",
+              background: pinColors[i % pinColors.length],
+              boxShadow: "0 1px 3px rgba(0,0,0,0.4)",
+              zIndex: 10,
+            }} />
+            <div style={{
+              background: "#FDFAF5",
+              padding: "5px 5px 18px",
+              boxShadow: "2px 3px 10px rgba(50,30,10,0.22)",
+              transform: `rotate(${rotate}deg)`,
+              width: w,
+            }}>
+              <ImageSlot image={images[i]} style={{ width: "100%", height: h }} />
+            </div>
+          </div>
+        ))}
+ 
+        {/* sticky note caption */}
+        {(caption || date || tag) && (
+          <div style={{
+            position: "absolute", bottom: 18, right: 16, zIndex: 20,
+            background: "rgba(255,248,180,0.96)",
+            padding: "10px 14px",
+            transform: "rotate(-2deg)",
+            boxShadow: "1px 3px 8px rgba(50,30,10,0.18)",
+            maxWidth: 180,
+            minWidth: 120,
+          }}>
+            {caption && <Caption text={caption} style={{ fontSize: 11, color: "#3B2A1A", lineHeight: 1.6 }} />}
+            <Meta date={date} tag={tag} style={{ marginTop: 6 }} />
+          </div>
+        )}
+      </div>
+    );
+  }
+);
+TemplateCorkboard.displayName = "TemplateCorkboard";
+ 
+// ─── Template 10 · Pile — photos loosely stacked/scattered, fan-out feel ─────
+// Best for: a single dump of memories, "the whole roll" energy.
+ 
+const TemplatePile = forwardRef<HTMLDivElement, MemoryCardProps>(
+  ({ images, caption, date, tag }, ref) => {
+    // back cards first (low z), front card last (high z, centered)
+    const back: [number, number, number, number, number][] = [
+      [30,  60,  -12, 280, 210],
+      [25, 300,   10, 270, 205],
+      [40,  20,    6, 265, 200],
+      [35, 330,   -8, 275, 205],
+    ];
+    return (
+      <div
+        ref={ref}
+        style={{
+          width: CARD_W,
+          height: 390,
+          background: "#2A221A",
+          position: "relative",
+          overflow: "hidden",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+        }}
+      >
+        {/* subtle felt texture */}
+        <div style={{
+          position: "absolute", inset: 0,
+          backgroundImage: "radial-gradient(circle at 50% 50%, #2E261E 0%, #1E1610 100%)",
+        }} />
+        <GrainOverlay />
+ 
+        {/* back scattered photos */}
+        {back.map(([top, left, rotate, w, h], i) => (
+          <div key={i} style={{
+            position: "absolute",
+            top, left,
+            background: "#FDFAF5",
+            padding: "5px 5px 22px",
+            boxShadow: "2px 4px 14px rgba(0,0,0,0.5)",
+            transform: `rotate(${rotate}deg)`,
+            zIndex: i + 1,
+            width: w,
+          }}>
+            <ImageSlot image={images[i + 1]} style={{ width: "100%", height: h }} />
+          </div>
+        ))}
+ 
+        {/* front hero photo — centered, slight tilt */}
+        <div style={{
+          position: "relative",
+          background: "#FDFAF5",
+          padding: "8px 8px 36px",
+          boxShadow: "4px 8px 28px rgba(0,0,0,0.65)",
+          transform: "rotate(-1.5deg)",
+          zIndex: 10,
+          width: 300,
+        }}>
+          <ImageSlot image={images[0]} style={{ width: "100%", height: 230 }} />
+          <div style={{ paddingTop: 10, display: "flex", flexDirection: "column", gap: 4, alignItems: "center" }}>
+            {caption && <Caption text={caption} align="center" style={{ fontSize: 12, color: palette.brown }} />}
+            <Meta date={date} tag={tag} align="center" />
+          </div>
+        </div>
+      </div>
+    );
+  }
+);
+TemplatePile.displayName = "TemplatePile";
 
 // ─── Registry ─────────────────────────────────────────────────────────────────
-
-export const TEMPLATES: {
+ 
+export type TemplateEntry = {
   id: TemplateId;
   label: string;
   description: string;
   slots: number;
   component: React.ForwardRefExoticComponent<MemoryCardProps & React.RefAttributes<HTMLDivElement>>;
-}[] = [
-  { id: "solo",      label: "Solo",       description: "1 hero photo, full bleed",      slots: 1, component: TemplateSolo },
-  { id: "diptych",   label: "Diptych",    description: "2 photos side by side",         slots: 2, component: TemplateDiptych },
-  { id: "triptych",  label: "Triptych",   description: "3 photos — 1 big + 2 small",    slots: 3, component: TemplateTriptych },
-  { id: "polaroid",  label: "Polaroid",   description: "1 photo, classic white border", slots: 1, component: TemplatePolaroid },
-  { id: "filmstrip", label: "Film Strip", description: "4 frames like 35mm film",       slots: 4, component: TemplateFilmstrip },
-  { id: "postcard",  label: "Postcard",   description: "Photo + ruled writing area",    slots: 1, component: TemplatePostcard },
+};
+ 
+export const TEMPLATES: TemplateEntry[] = [
+  { id: "solo",       label: "Solo",        description: "1 hero photo, full bleed",           slots: 1, component: TemplateSolo },
+  { id: "diptych",    label: "Diptych",     description: "2 photos side by side",              slots: 2, component: TemplateDiptych },
+  { id: "triptych",   label: "Triptych",    description: "3 photos — 1 big + 2 small",         slots: 3, component: TemplateTriptych },
+  { id: "polaroid",   label: "Polaroid",    description: "1 photo, classic white border",      slots: 1, component: TemplatePolaroid },
+  { id: "filmstrip",  label: "Film Strip",  description: "4 frames like 35mm film",            slots: 4, component: TemplateFilmstrip },
+  { id: "postcard",   label: "Postcard",    description: "Photo + ruled writing area",         slots: 1, component: TemplatePostcard },
+  { id: "scrapbook",  label: "Scrapbook",   description: "5 photos, tape, graph paper chaos",  slots: 5, component: TemplateScrapbook },
+  { id: "journal",    label: "Journal",     description: "3 photos on a ruled diary page",     slots: 3, component: TemplateJournal },
+  { id: "corkboard",  label: "Corkboard",   description: "6 photos pinned with pushpins",      slots: 6, component: TemplateCorkboard },
+  { id: "pile",       label: "Pile",        description: "5 photos scattered on a dark table", slots: 5, component: TemplatePile },
 ];
 
 // ─── Main export: MemoryCard dispatcher ───────────────────────────────────────
