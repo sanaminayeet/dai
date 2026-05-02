@@ -87,7 +87,7 @@ export default function PostcardCreator() {
     const [recipient, setRecipient] = useState("");
     const [context, setContext] = useState("");
     const [message, setMessage] = useState("");
-    const [style, setStyle] = useState(STYLES[0]);
+    const [template, setTemplate] = useState("solo");
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
     const [dragging, setDragging] = useState(false);
@@ -798,81 +798,33 @@ export default function PostcardCreator() {
 
                 {/* Step 3 — Preview */}
                 {step === 3 && (
-                    <div className="card">
-                        <div className="card-title">Your postcard</div>
+                  <div className="card">
+                    <div className="card-title">Your postcard</div>
 
-
-                        <div
-                            className="postcard"
-                            ref={postcardRef}
-                            style={{ background: style.bg }}
-                        >
-                            <img 
-                                src={imagePreview} 
-                                alt="postcard" 
-                                className="pc-photo"
-                                style={{ imageRendering: "auto" }}
-                            />
-                            <div className="pc-body">
-                                <div className="pc-left" style={{ color: style.accent }}>
-                                    <div className="pc-label" style={{ color: style.accent }}>Message</div>
-                                    <div
-                                        contentEditable
-                                        suppressContentEditableWarning
-                                        onInput={(e) => setMessage(e.currentTarget.textContent)}
-                                        className="pc-message-text"
-                                        style={{ color: style.accent, minHeight: "80px", outline: "none", whiteSpace: "pre-wrap" }}
-                                    >
-                                        {message}
-                                    </div>
-                                </div>
-                                <div className="pc-right" style={{ color: style.accent }}>
-                                    <div
-                                        className="pc-stamp"
-                                        style={{ background: style.border, color: style.accent }}
-                                    >
-                                        dAI<br />2026
-                                    </div>
-                                    {recipient ? (
-                                        <>
-                                            <div className="pc-to" style={{ color: style.accent }}>To</div>
-                                            <div className="pc-recipient" style={{ color: style.accent }}>{recipient}</div>
-                                            <div className="pc-subtitle" style={{ color: style.accent }}>with love ♥</div>
-                                        </>
-                                    ) : (
-                                        <>
-                                            <div className="pc-to" style={{ color: style.accent }}>Journal</div>
-                                            <div className="pc-recipient" style={{ color: style.accent }}>My memories</div>
-                                        </>
-                                    )}
-                                    <div className="pc-lines">
-                                        {[...Array(3)].map((_, i) => (
-                                            <div key={i} className="pc-line" style={{ background: style.border }} />
-                                        ))}
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-
-                        <div className="hint" style={{ marginBottom: "1rem" }}>
-                            You can edit the message directly on the postcard above ↑
-                        </div>
-
-
-                        <div className="btn-row">
-                            <button className="btn-ghost" onClick={() => setStep(2)}>← Edit</button>
-                            <button
-                                className="btn-ghost"
-                                onClick={handleGenerate}
-                            >
-                                Regenerate ↺
-                            </button>
-                            <button className="btn-primary" onClick={handleDownload}>
-                                Download / Print
-                            </button>
-                        </div>
+                    <div ref={postcardRef}>
+                      <MemoryCard
+                        templateId={templateId}
+                        images={[imagePreview]}
+                        caption={message}
+                        date={new Date().toISOString().slice(0, 10)}
+                        tag={recipient ? `To ${recipient}` : "Journal"}
+                      />
                     </div>
+
+                    <div className="hint" style={{ marginBottom: "1rem" }}>
+                      You can edit the message directly on the postcard above ↑
+                    </div>
+
+                    <div className="btn-row">
+                      <button className="btn-ghost" onClick={() => setStep(2)}>← Edit</button>
+                      <button className="btn-ghost" onClick={handleGenerate}>
+                        Regenerate ↺
+                      </button>
+                      <button className="btn-primary" onClick={handleDownload}>
+                        Download / Print
+                      </button>
+                    </div>
+                  </div>
                 )}
             </div>
         </>
